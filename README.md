@@ -1,2 +1,2 @@
-# circuitAnaliser
+# circuitAnalyzer
 Analisador nodal de circuitos
