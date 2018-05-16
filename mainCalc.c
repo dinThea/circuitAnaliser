@@ -1,6 +1,29 @@
 #include <stdio.h>
-#include<math.h>
-#include<conio.h>
+#include <math.h>
+#if __linux__
+	#include <sys/select.h>
+	int kbhit(void) {
+		struct timeval tv;
+		fd_set read_fd;
+
+		tv.tv_sec=0;
+		tv.tv_usec=0;
+
+		FD_ZERO(&read_fd);
+
+		FD_SET(0,&read_fd);
+
+		if(select(1, &read_fd,NULL, NULL, &tv) == -1)
+		return 0; 
+
+		if(FD_ISSET(0,&read_fd))
+		return 1;
+
+		return 0;
+	}
+#else
+	#include<conio.h>
+#endif
 
 struct ramO{
 	int numRamos;
@@ -31,8 +54,6 @@ char disp;
 void menu(void);
 void dadosin(void);
 
-/* run this program using the console pauser or add your own getch, system("pause") or input loop */
-
 void main() {
 	system("cls");
 	do{
@@ -48,7 +69,7 @@ void main() {
 					while(!kbhit()){}
 				}
 				else{
-					printf("\nTensao total das fontes: %7.3fV\n", voltagem);
+					printf("\nTensao total das fontes: %7.2fV\n", voltagem);
 					printf("Pressione uma tecla!");
 					while(!kbhit()){}
 				}
@@ -69,7 +90,7 @@ void main() {
 				break;
 			case 4:
 				if(!dados){
-					printf("\nNão houve entrada de dados!\n");
+					printf("\nNï¿½o houve entrada de dados!\n");
 					printf("Pressione uma tecla");
 					while(!kbhit()){}
 					
@@ -132,7 +153,7 @@ void dadosin(void){
 		scanf("%f", &volts);
 		voltagem = voltagem + volts;
 	}
-	printf("\nTensao total: %f", voltagem);
+	printf("\nTensao total: %.2f", voltagem);
 	printf("\nQuantos nos (min = 2)?\n");
 	scanf("%d", &numeroNos);
 	fillNode(voltagem, numeroNos);
@@ -166,8 +187,8 @@ float fillNode(float tensao, int nNos){
 			ramos[i][j].rEqui = 1/ramos[i][j].rEqui;
 		}
 	}
-	//printf("\nMatriz de resistências:\n");
-	//Loop para mostrar na tela a matriz de resistências e espelha-la 
+	//printf("\nMatriz de resistï¿½ncias:\n");
+	//Loop para mostrar na tela a matriz de resistï¿½ncias e espelha-la 
 	for(i = 0; i < nNos; i++){
 		for(j = 0; j < nNos; j++){
 			ramos[j][i] = ramos[i][j];	
@@ -176,7 +197,7 @@ float fillNode(float tensao, int nNos){
 		//printf("\n");
 	}
 	//printf("\nVetor correntes:\n");
-	//Loop para calcular as correntes e fazer parcialmente a transformação de Norton (somando os valores da linha 1 às linhas adjacentes
+	//Loop para calcular as correntes e fazer parcialmente a transformaï¿½ï¿½o de Norton (somando os valores da linha 1 ï¿½s linhas adjacentes
 	for(i = 1; i < nNos; i++){
 		if(i > 1){
 			if((int)ramos[i][1].rEqui != 0){
@@ -193,7 +214,7 @@ float fillNode(float tensao, int nNos){
 		//printf("%f\n", correntes[i-1]);	
 	}
 	//printf("\n");
-	//Loop para completar a matriz de admitâncias
+	//Loop para completar a matriz de admitï¿½ncias
 	for(i = 2; i < nNos; i++){
 		for(j = 2; j < nNos; j++){
 			if(i == j){
@@ -213,7 +234,7 @@ float fillNode(float tensao, int nNos){
 			ramosAdmi[i][0] = ramosAdmi[i][0] - 1 / ramos[i + 1][1].rEqui;
 		ramosAdmi[0][i] = ramosAdmi[i][0];
 	}
-	//Calculo dos valores da matriz de admitâncias para i=i
+	//Calculo dos valores da matriz de admitï¿½ncias para i=i
 	for(i = 0; i < nNos - 1; i++){
 		for(j = 0; j < nNos - 1; j++){
 			if(i == j){
@@ -225,10 +246,10 @@ float fillNode(float tensao, int nNos){
 			}
 		}
 	}
-	//Matriz que armazenará o valor da inversa da matriz
+	//Matriz que armazenarï¿½ o valor da inversa da matriz
 	float ratio, a;
 	//printf("\nMatriz admitancia:\n");
-	//Completa a matriz inversa e imprime a matriz admitância
+	//Completa a matriz inversa e imprime a matriz admitï¿½ncia
 	for(i = 0; i < (nNos - 1); i++){
 		for(j = 0; j < (nNos - 1); j++){
 			if (ramosAdmi[i][i] < 0){
@@ -240,23 +261,14 @@ float fillNode(float tensao, int nNos){
 		//printf("\n");
 	}	
 	int n = nNos - 2;
-	//Processo para encontrar o inverso da admitância, que é a matriz impedância 
+	//Processo para encontrar o inverso da admitï¿½ncia, que ï¿½ a matriz impedï¿½ncia 
 	float d = determinant(matrix, n);
 	cofactor(matrix, n);
     //Imprime a matriz inversa
     //printf("\nMatriz impedancia:\n");
-    for(i = 0; i < n; i++){
-        for(j = 0; j < n; j++){
-            //printf("%.2f", matrix[i][j]);
-            //printf("\t");
-        }
-        //printf("\n");
-    }
-    //Calculo das tensoes
-    //printf("\nVetor tensoes nodais:\n");
     for(i = 0; i < nNos; i++){
     	correntes[i] = correntes[i+1];
-	}
+		}
     for(i = 0; i < n; i++){
     	tensoes[i] = 0;
     	for(j = 0; j < n; j++){
@@ -302,7 +314,7 @@ void mostraTensao(){
 	for(i = 0; i < numeroNos; i++){
 		for(j = 0; j < numeroNos; j++){
 			ramos[i][j].tensao = tensoes[i] - tensoes[j];
-			printf("%8.4f\t", ramos[i][j].tensao);
+			printf("%8.2f\t", ramos[i][j].tensao);
 				
 		}
 		printf("\n");
@@ -317,7 +329,7 @@ void mostraCorrente(){
 				ramos[i][j].correnteTotal = (ramos[i][j].tensao)/(ramos[i][j].rEqui);
 			if (i == j)
 				ramos[i][j].correnteTotal = 0;
-			printf("%8.4f\t", ramos[i][j].correnteTotal);
+			printf("%8.2f\t", ramos[i][j].correnteTotal);
 				
 		}
 		printf("\n");
